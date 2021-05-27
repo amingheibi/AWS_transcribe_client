@@ -25,22 +25,30 @@ for file in testset.objects.all():
     print(file_name)
     # Start a transciption job
     if(re.search(r"-w\.wav$", file_name) != None):  # I just wanna use some files
-        asr_client.start_transcription_job(
-            TranscriptionJobName=file_name,
-            Media={'MediaFileUri': file_uri},
-            MediaFormat='wav',
-            LanguageCode='fa-IR')
-        # See if the job is done
-        while True:
-            response = asr_client.get_transcription_job(
-                TranscriptionJobName=file_name)
-            status = response['TranscriptionJob']['TranscriptionJobStatus']
-            if status == 'COMPLETED':
-                sharable_url = response['TranscriptionJob']['Transcript']['TranscriptFileUri']
-                output = requests.get(sharable_url)
-                open('output/'+file_name+'.txt', 'wb').write(output.content)
-                break
-            else:
-                print(file_name)
-                print(status)
-            sleep(15)
+        try:
+            asr_client.start_transcription_job(
+                TranscriptionJobName=file_name,
+                Media={'MediaFileUri': file_uri},
+                MediaFormat='wav',
+                LanguageCode='fa-IR')
+            # See if the job is done
+            while True:
+                response = asr_client.get_transcription_job(
+                    TranscriptionJobName=file_name)
+                status = response['TranscriptionJob']['TranscriptionJobStatus']
+                if status == 'COMPLETED':
+                    sharable_url = response['TranscriptionJob']['Transcript']['TranscriptFileUri']
+                    output = requests.get(sharable_url)
+                    open('output/'+file_name+'.txt',
+                         'wb').write(output.content)
+                    break
+                elif status == 'FAILED':
+                    print('failed and skiped')
+                    break
+                else:
+                    print(file_name)
+                    print(status)
+                sleep(15)
+        except Exception as e:
+            print(e)
+            pass
